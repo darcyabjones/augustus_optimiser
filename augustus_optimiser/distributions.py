@@ -1,236 +1,113 @@
 """
 """
 
-import re
-from typing import cast
 from typing import List
 from typing import Sequence
 from typing import Union
+from typing import Generic
+from typing import TypeVar
+
+from augustus_optimiser.errors import DistValueError
 
 
-from augustus_optimiser.errors import DistParseError
+# Genetic type var for baseclassing Distribution.
+T = TypeVar("T", str, int, float)
 
-WHITESPACE = re.compile(r"\s+")
 
-
-class Distribution(object):
+class Distribution(Generic[T]):
     """ Abstract base class for probability distribution functions.
 
     Not intedended to be used directly.
     Subclasses should implement these methods.
     """
 
-    @classmethod
-    def parse(cls, string: str) -> "Distribution":
-        """ Parse a string as a function definition. """
-
-        split_string = WHITESPACE.split(string.strip())
-        return cls.parse_list(cast(List[Union[str, int, float]], split_string))
-
-    @classmethod
-    def parse_list(
-        cls,
-        li: Sequence[Union[str, int, float]]
-    ) -> "Distribution":
+    def get(self) -> T:
         raise NotImplementedError("Subclasses must implement this method.")
 
-    @staticmethod
-    def usage() -> str:
-        raise NotImplementedError("Subclasses must implement this method.")
+    def get_many(self, n: int) -> List[T]:
+        return [self.get() for _ in range(n)]
 
 
-class PDF(Distribution):
-    """ Abstract base class from continuous distributions. """
+class FloatConst(Distribution[float]):
+    """ A constant value. """
 
-    def random(self) -> float:
-        raise NotImplementedError("Subclasses must implement this method.")
-
-    def many_random(self, n: int) -> List[float]:
-        raise NotImplementedError("Subclasses must implement this method.")
-
-
-class PMF(Distribution):
-    """ Abstract base class for discrete distributions. """
-
-    def random(self) -> int:
-        raise NotImplementedError("Subclasses must implement this method.")
-
-    def many_random(self, n: int) -> List[int]:
-        raise NotImplementedError("Subclasses must implement this method.")
-
-
-class Categorical(Distribution):
-    """ Abstract base class for selecting one of many choices. """
-
-    def random(self) -> str:
-        raise NotImplementedError("Subclasses must implement this method.")
-
-    def many_random(self, n: int) -> List[str]:
-        raise NotImplementedError("Subclasses must implement this method.")
-
-
-class Uniform(PDF):
-
-    def __init__(self, min: float, max: float) -> None:
-        self.min = min
-        self.max = max
+    def __init__(self, value: float) -> None:
+        self.value = value
         return
 
-    @staticmethod
-    def usage() -> str:
-        return "uniform <min> <max>"
+    def get(self) -> float:
+        return self.value
 
-    @classmethod
-    def parse_list(cls, li: Sequence[Union[str, int, float]]) -> "Uniform":
-        """ Parse a list definition as a uniform distribution definition.
 
-        Examples:
+class IntConst(Distribution[int]):
 
-        >>> u = Uniform.parse_list(["uniform", 1, 3.5])
-        >>> u.min
-        1.0
-        >>> u.max
-        3.5
-        >>> Uniform.parse_list(["", 1, 2])
-        Traceback (most recent call last):
-            ...
-        DistParseError: Invalid function name for uniform: ''.
-        """
+    def __init__(self, value: int) -> None:
+        self.value = value
+        return
 
-        fn_name = li[0]
-        if fn_name != "uniform":
-            raise DistParseError(
-                f"Invalid function name for uniform: '{fn_name}'",
-            )
+    def get(self) -> int:
+        return self.value
 
-        try:
-            min_ = float(li[1])
-        except IndexError:
-            raise DistParseError(
-                "Missing min value for pdf.",
-            )
-        except ValueError:
-            raise DistParseError(
-                f"Could not parse min value as float: {li[1]}.",
-            )
 
-        try:
-            max_ = float(li[2])
-        except IndexError:
-            raise DistParseError(
-                "Missing max value for pdf.",
-            )
-        except ValueError:
-            raise DistParseError(
-                f"Could not parse max value as float: {li[2]}.",
-            )
+class StrConst(Distribution[str]):
 
-        if min_ >= max_:
-            raise DistParseError(f"The <min> bound must be smaller than <max>")
+    def __init__(self, value: str) -> None:
+        self.value = value
+        return
 
-        return cls(min_, max_)
+    def get(self) -> str:
+        return self.value
 
-    def random(self) -> float:
+
+PDFUnion = Union[float, Distribution[float]]
+
+
+class Uniform(Distribution[float]):
+
+    def __init__(self, min: PDFUnion, max: PDFUnion) -> None:
+        if isinstance(min, float):
+            self.min: Distribution[float] = FloatConst(min)
+        else:
+            self.min = min
+
+        if isinstance(max, float):
+            self.max: Distribution[float] = FloatConst(max)
+        else:
+            self.max = max
+        return
+
+    def get(self) -> float:
         """ Return a random value between min and max.
 
         Examples:
         >>> for _ in range(100):
-        ...     x = Uniform(0, 5).random()
+        ...     x = Uniform(0, 5).get()
         ...     assert isinstance(x, float)
         ...     assert 0 <= x <= 5
         """
 
         import random
-        return random.uniform(self.min, self.max)
-
-    def many_random(self, n: int) -> List[float]:
-        """ Return n random values between min and max.
-
-        Examples:
-        >>> x = Uniform(0, 5).many_random(100)
-        >>> assert isinstance(x, list)
-        >>> assert all(map(lambda y: isinstance(y, float), x))
-        >>> assert all(map(lambda y: 0 <= y <= 5, x))
-        """
-
-        import random
-        return [random.uniform(self.min, self.max) for _ in range(n)]
+        return random.uniform(self.min.get(), self.max.get())
 
 
-class Range(PMF):
+PMFUnion = Union[int, Distribution[int]]
 
-    def __init__(self, min: int, max: int) -> None:
-        self.min = min
-        self.max = max
+
+class Range(Distribution[int]):
+
+    def __init__(self, min: PMFUnion, max: PMFUnion) -> None:
+        if isinstance(min, int):
+            self.min: Distribution[int] = IntConst(min)
+        else:
+            self.min = min
+
+        if isinstance(max, int):
+            self.max: Distribution[int] = IntConst(max)
+        else:
+            self.max = max
         return
 
-    @staticmethod
-    def usage() -> str:
-        return "range <min> <max>"
-
-    @classmethod
-    def parse_list(cls, li: Sequence[Union[str, int, float]]) -> "Range":
-        """ Parse a list definition as a range distribution definition.
-
-        Examples:
-
-        >>> r = Range.parse_list(["range", 1, 3])
-        >>> r.min
-        1
-        >>> r.max
-        3
-        >>> Range.parse_list(["hi", 1, 3])
-        Traceback (most recent call last):
-            ...
-        DistParseError: Invalid function name for uniform: 'hi'.
-        >>> Range.parse_list(["range", 1, 3.5])
-        Traceback (most recent call last):
-            ...
-        DistParseError: Max bound is a float: 3.5. Expected an integer.
-        """
-
-        fn_name = li[0]
-        if fn_name != "range":
-            raise DistParseError(
-                f"Invalid function name for range: '{fn_name}'",
-            )
-
-        try:
-            min_ = int(li[1])
-            assert not isinstance(li[1], float)
-        except IndexError:
-            raise DistParseError(
-                "Missing min value for range.",
-            )
-        except AssertionError:
-            raise DistParseError(f"Min bound is a float: {li[1]}. "
-                                 "Expected an integer.")
-        except ValueError:
-            raise DistParseError(
-                f"Could not parse min value as integer: {li[1]}.",
-            )
-
-        try:
-            max_ = int(li[2])
-            assert not isinstance(li[2], float)
-        except IndexError:
-            raise DistParseError(
-                "Missing max value for range.",
-            )
-        except AssertionError:
-            raise DistParseError(f"Max bound is a float: {li[2]}. "
-                                 "Expected an integer.")
-        except ValueError:
-            raise DistParseError(
-                f"Could not parse max value as integer: {li[2]}.",
-            )
-
-        if min_ >= max_:
-            raise DistParseError(f"The <min> bound must be smaller than <max>")
-
-        return cls(min_, max_)
-
-    def random(self) -> int:
+    def get(self) -> int:
         """ Return a random integer between min and max.
 
         Examples:
@@ -241,62 +118,23 @@ class Range(PMF):
         """
 
         import random
-        return random.randint(self.min, self.max)
-
-    def many_random(self, n: int) -> List[int]:
-        """ Return n random values between min and max.
-
-        Examples:
-        >>> x = Range(0, 5).many_random(100)
-        >>> assert all(map(lambda y: isinstance(y, int), x))
-        >>> assert all(map(lambda y: 0 <= y <= 5, x))
-        """
-
-        import random
-        return [random.randint(self.min, self.max) for _ in range(n)]
+        return random.randint(self.min.get(), self.max.get())
 
 
-class Choose(Categorical):
+class Choose(Distribution[T]):
 
-    def __init__(self, choices: Sequence[str]) -> None:
-        self.choices = list(choices)
+    def __init__(self, choices: Sequence[T]) -> None:
+        self.choices: List[T] = list(choices)
+
+        first_type = type(self.choices[0])
+        if not all(isinstance(t, first_type) for t in self.choices):
+            raise DistValueError(
+                "All members of categorical distributions must be the same "
+                "type."
+            )
         return
 
-    @staticmethod
-    def usage() -> str:
-        return "choose option1 option2 ..."
-
-    @classmethod
-    def parse_list(cls, li: Sequence[Union[str, int, float]]) -> "Choose":
-        """ Parse choose from a list representation.
-
-        Examples:
-        >>> c = Choose.parse_list(["choose", "one", "two", 3])
-        >>> c.choices
-        ['one', 'two', '3']
-        >>> Choose.parse_list(["", 1, 2])
-        Traceback (most recent call last):
-            ...
-        DistParseError: Invalid function name for choose: ''.
-        >>> Choose.parse_list(["choose"])
-        Traceback (most recent call last):
-            ...
-        DistParseError: No options specified for choose to use..
-        """
-
-        fn_name = li[0]
-        if fn_name != "choose":
-            raise DistParseError(
-                f"Invalid function name for choose: '{fn_name}'",
-            )
-
-        choices = li[1:]
-        if len(choices) == 0:
-            raise DistParseError("No options specified for choose to use.")
-
-        return cls(list(map(str, choices)))
-
-    def random(self) -> str:
+    def get(self) -> T:
         """ Returns a random choice.
 
         >>> x = Choose(["one", "two", "three"]).random()
@@ -306,7 +144,7 @@ class Choose(Categorical):
         import random
         return random.choice(self.choices)
 
-    def many_random(self, n: int) -> List[str]:
+    def get_many(self, n: int) -> List[T]:
         """ Returns n random choices.
 
         Examples:
@@ -316,3 +154,13 @@ class Choose(Categorical):
 
         import random
         return random.choices(self.choices, k=n)
+
+
+# monotonic 3 range 1 5
+# 2 4 5
+
+# sample 3 range 1 5
+# 3 1 5
+
+# seq 5 uniform 0.5 0.9
+# 0.5 0.6 0.7 0.8 0.9

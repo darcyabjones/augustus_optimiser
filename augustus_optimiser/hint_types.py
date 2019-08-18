@@ -1,7 +1,7 @@
 import enum
 from typing import List
 from typing import Union
-from distributions import PDF, PMF, Categorical
+from augustus_optimiser.distributions import PDF, PMF, Categorical
 
 
 class HintType(enum.Enum):

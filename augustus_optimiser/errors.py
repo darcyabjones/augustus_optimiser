@@ -43,3 +43,15 @@ class DistParseError(AOError):
 
     def __str__(self) -> str:
         return f"{self.msg}"
+
+
+class DistValueError(AOError):
+
+    ecode: ClassVar[ECode] = ECode.SOFTWARE
+
+    def __init__(self, msg: str) -> None:
+        self.msg = msg
+        return
+
+    def __str__(self) -> str:
+        return f"{self.msg}"
