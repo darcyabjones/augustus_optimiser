@@ -1,7 +1,12 @@
 import enum
-from typing import List
+
 from typing import Union
-from augustus_optimiser.distributions import PDF, PMF, Categorical
+from typing import List
+
+# from augustus_optimiser.distributions import DistributionIF
+from augustus_optimiser.distributions import AOList
+from augustus_optimiser.distributions import FloatConst
+from augustus_optimiser.distributions import DistributionIF
 
 
 class HintType(enum.Enum):
@@ -60,11 +65,46 @@ class HintCell(object):
 
     def __init__(
         self,
-        nsteps: Union[int, PMF, Categorical] = 1,
-        boundaries: Union[List[float], PDF, Categorical] = [],
-        boni: Union[List[float], PDF, PMF, Categorical] = [1]
-    ):
+        hint: str,
+        boundaries: AOList[Union[float, int]] = AOList([]),
+        boni: AOList[Union[float, int]] = AOList([FloatConst(1)]),
+    ) -> None:
+        """ Creates a weight cell for a specific hint type. """
+
+        self.hint = hint
+        self.boundaries = boundaries
+        self.boni = boni
         return
+
+    def get(self) -> str:
+        """ Get the string representation of a hint cell.
+
+        Examples:
+        >>> from augustus_optimiser.distributions import Seq
+        >>> from augustus_optimiser.distributions import Range
+        >>> from augustus_optimiser.distributions import Uniform
+        >>> from augustus_optimiser.distributions import Sample
+
+        >>> h = HintCell('M')
+        >>> h.get()
+        'M 1 1'
+
+        >>> h = HintCell('M', Seq(5, Range(1, 10)), Seq(6, Uniform(0.5, 1)))
+        >>> h.get()
+        'M 6 1 4 6 8 10 0.5 0.6 0.7 0.8 0.9 1.0'
+        """
+
+        boundaries = self.boundaries.get()
+        boni = self.boni.get()
+        n_parts = min([len(boundaries) + 1, len(boni)])
+
+        joined_boundaries = " ".join(map(str, boundaries[:n_parts - 1]))
+        joined_boni = " ".join(map(str, boni[:n_parts]))
+
+        if n_parts == 1:
+            return f"{self.hint} {n_parts} {joined_boni}"
+        else:
+            return f"{self.hint} {n_parts} {joined_boundaries} {joined_boni}"
 
 
 class HintRow(object):
@@ -72,9 +112,35 @@ class HintRow(object):
     def __init__(
         self,
         kind: HintType,
-        bonus: float,
-        malus: float,
-        local_malus: float,
-        custom: List[HintCell],
+        bonus: DistributionIF,
+        malus: DistributionIF,
+        local_malus: DistributionIF,
+        hints: List[HintCell],
     ) -> None:
+        self.kind = kind
+        self.bonus = bonus
+        self.malus = malus
+        self.local_malus = local_malus
+        self.hints = hints
         return
+
+    def get(self) -> str:
+        """ Get a string representation of the hint row.
+
+        Examples:
+        >>> hr = HintRow(
+        ...     HintType.TSS,
+        ...     FloatConst(1.0),
+        ...     FloatConst(0.5),
+        ...     FloatConst(0.1),
+        ...     [HintCell('M')],
+        ... )
+        >>> hr.get()
+        'tss 1.0 0.5 0.1 M 1 1'
+        """
+
+        bonus = self.bonus.get()
+        malus = self.malus.get()
+        local_malus = self.local_malus.get()
+        hints = " ".join([h.get() for h in self.hints])
+        return f"{self.kind} {bonus} {malus} {local_malus} {hints}"

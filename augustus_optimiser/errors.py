@@ -32,26 +32,29 @@ class AOError(Exception):
 
     ecode: ClassVar[ECode] = ECode.ERROR
 
-
-class DistParseError(AOError):
-
-    ecode: ClassVar[ECode] = ECode.USAGE
-
     def __init__(self, msg: str) -> None:
         self.msg = msg
         return
 
     def __str__(self) -> str:
         return f"{self.msg}"
+
+
+class DistParseError(AOError):
+
+    ecode: ClassVar[ECode] = ECode.USAGE
 
 
 class DistValueError(AOError):
 
     ecode: ClassVar[ECode] = ECode.SOFTWARE
 
-    def __init__(self, msg: str) -> None:
-        self.msg = msg
-        return
 
-    def __str__(self) -> str:
-        return f"{self.msg}"
+class MaxAttemptsError(AOError):
+
+    ecode: ClassVar[ECode] = ECode.SOFTWARE
+
+
+class DistDomainError(AOError):
+
+    ecode: ClassVar[ECode] = ECode.SOFTWARE
