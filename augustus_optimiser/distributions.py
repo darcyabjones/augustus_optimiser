@@ -75,10 +75,10 @@ class FloatConst(PDF):
     """ A constant float value. """
 
     def __init__(self, value: Union[float]) -> None:
-        self.value = value
+        self.value = float(value)
         return
 
-    def get(self) -> Union[float]:
+    def get(self) -> float:
         return self.value
 
     def __repr__(self) -> str:
@@ -400,7 +400,7 @@ class Chi(PDF):
 
     def __repr__(self) -> str:
         return (f"{self.__class__.__name__}"
-                "({repr(self.df)}, {repr(self.loc)}, {repr(self.scale)})")
+                f"({repr(self.df)}, {repr(self.loc)}, {repr(self.scale)})")
 
     def get(self) -> float:
         """ Return a random value from chi distribution.
@@ -497,7 +497,7 @@ class Gamma(PDF):
 
     def __repr__(self) -> str:
         return (f"{self.__class__.__name__}"
-                "({repr(self.a)}, {repr(self.loc)}, {repr(self.scale)})")
+                f"({repr(self.a)}, {repr(self.loc)}, {repr(self.scale)})")
 
     def get(self) -> float:
         """ Return a random value from gamma distribution.

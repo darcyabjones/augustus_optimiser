@@ -83,8 +83,16 @@ setup(
     # for example:
     # $ pip install -e .[dev,test]
     extras_require={
-        'dev': ['check-manifest', 'jupyter'],
-        'test': ['coverage', "pytest", "mypy"],
+        'dev': [
+            'check-manifest',
+            'jupyter',
+            'numpy-stubs @ https://github.com/numpy/numpy-stubs/archive/master.zip#egg=numpy-stubs'
+        ],
+        'test': [
+            'coverage',
+            "pytest",
+            "mypy"
+        ],
     },
 
     # If there are data files included in your packages that need to be

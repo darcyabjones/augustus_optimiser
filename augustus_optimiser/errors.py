@@ -42,7 +42,7 @@ class AOError(Exception):
 
 class DistParseError(AOError):
 
-    ecode: ClassVar[ECode] = ECode.USAGE
+    ecode: ClassVar[ECode] = ECode.DATAERR
 
 
 class DistValueError(AOError):
@@ -58,3 +58,8 @@ class MaxAttemptsError(AOError):
 class DistDomainError(AOError):
 
     ecode: ClassVar[ECode] = ECode.SOFTWARE
+
+
+class ConfigParseError(AOError):
+
+    ecode: ClassVar[ECode] = ECode.DATAERR
