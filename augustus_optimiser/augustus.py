@@ -2,7 +2,6 @@ from typing import Tuple
 from typing import Union
 
 from Bio.Application import AbstractCommandline, _Option, _Argument
-from typing import Optional
 
 
 def check_option_value(valid: Tuple[str], string: str) -> None:
@@ -44,6 +43,7 @@ def check_is_str(string: str) -> None:
         raise ValueError(
             f"The parameter must be a string. You provided '{string}'."
         )
+    return
 
 
 def check_is_int(num: int) -> None:
@@ -51,15 +51,26 @@ def check_is_int(num: int) -> None:
         raise ValueError(
             f"The parameter must be an integer. You provided '{num}'."
         )
+    return
+
+
+def check_is_positive_int(num: int) -> None:
+    check_is_int(num)
+    if num < 0:
+        raise ValueError(
+            f"The parameter cannot be negative. You provided '{num}'."
+        )
+    return
 
 
 def check_is_int_in_range(num: int, min: int, max: int) -> None:
     check_is_int(num)
     if not (min <= num <= max):
         raise ValueError(
-            f"The parameter must be between {min} and {max}. "
+            f"The parameter must be between '{min}' and '{max}'. "
             f"You provided '{num}'."
         )
+    return
 
 
 def check_is_numeric(num: Union[int, float]) -> None:
@@ -67,25 +78,51 @@ def check_is_numeric(num: Union[int, float]) -> None:
         raise ValueError(
             f"The parameter must be a number. You provided '{num}'."
         )
+    return
+
+
+def check_is_positive_numeric(num: Union[int, float]) -> None:
+    check_is_numeric(num)
+    if num < 0:
+        raise ValueError(
+            f"The parameter cannot be negative. You provided '{num}'."
+        )
+    return
+
+
+def check_is_numeric_in_range(
+    num: Union[int, float],
+    min: Union[int, float],
+    max: Union[int, float]
+) -> None:
+    check_is_numeric(num)
+    if not (min <= num <= max):
+        raise ValueError(
+            f"The parameter must be between '{min}' and '{max}'. "
+            f"You provided '{num}'."
+        )
+    return
 
 
 def check_is_probability(num: Union[int, float]) -> None:
-    check_is_numeric(num)
-    if not (0 <= num <= 1):
-        raise ValueError(
-            "The parameter must be a number between 0 and 1. "
-            f"You provided '{num}'."
-        )
+    check_is_numeric_in_range(num, 0, 1)
+    return
 
 
 class Augustus(AbstractCommandline):
 
     def __init__(self, cmd="augustus", **kwargs):
-
+        self.program_name = cmd
         self.parameters = [
+            _Argument(["infile"],
+                      "The input fasta or genbank file to run analysis on.",
+                      checker_function=check_is_str,
+                      filename=True,
+                      is_required=True),
             _Option(["--species", "species"],
                     "The species to use from the config path.",
-                    is_required=True),
+                    is_required=True,
+                    checker_function=check_is_str),
             _Option(["--strand", "strand"],
                     ("Report predicted genes on 'both' strands, "
                      "just the 'forward', or just the 'backward' strand. "
@@ -128,7 +165,7 @@ class Augustus(AbstractCommandline):
                      "piece of DNA if /Constant/decomp_num_steps > 1 for "
                      "that species. This is why this value should not be set "
                      "very large, even if you have plenty of memory."),
-                    checker_function=check_is_int),
+                    checker_function=check_is_positive_int),
             _Option(["--protein", "protein"],
                     "Include the proteins in the output.",
                     checker_function=check_augustus_on_off),
@@ -177,7 +214,7 @@ class Augustus(AbstractCommandline):
                      "the same time as one run without sampling, e.g. "
                      "`--sample=60` takes about 3 times as much time as "
                      "`--sample=0`. The default is `--sample=100`"),
-                    checker_function=check_is_int),
+                    checker_function=check_is_positive_int),
             _Option(["--minexonintronprob", "minexonintronprob"],
                     ("When deriving alternatives_from_sampling. The posterior "
                      "probability of every exon and every intron in a "
@@ -223,24 +260,326 @@ class Augustus(AbstractCommandline):
                      "in total. For t=3, 96.1% of human exons with "
                      "posterior probability >= 98% are correct."),
                     checker_function=lambda x: check_is_int_in_range(x, 0, 7)),
+            _Option(["--proteinprofile", "proteinprofile"],
+                    "Read a protein profile from file filename.",
+                    checker_function=check_is_str,
+                    filename=True),
+            _Option(["--predictionStart", "prediction_start"],
+                    ("Define the range of the sequence for which predictions "
+                     "should be found."),
+                    checker_function=check_is_positive_int),
+            _Option(["--predictionEnd", "prediction_end"],
+                    ("Define the range of the sequence for which predictions "
+                     "should be found."),
+                    checker_function=check_is_positive_int),
+            _Option(["--gff3", "gff3"],
+                    "Output in gff3 format",
+                    checker_function=check_augustus_on_off),
+            _Option(["--UTR", "utr"],
+                    ("Predict the untranslated regions in addition to "
+                     "the coding sequence."),
+                    checker_function=check_augustus_on_off),
+            _Option(["--outfile", "outfile"],
+                    "print output to filename instead to standard output.",
+                    checker_function=check_is_str,
+                    filename=True),
+            _Option(["--noInFrameStop", "no_in_frame_stop"],
+                    ("Don't report transcripts with in-frame stop codons. "
+                     "Otherwise, intron-spanning stop codons could occur."),
+                    checker_function=check_augustus_true_false),
+            _Option(["--noprediction", "noprediction"],
+                    ("If true and input is in genbank format, no "
+                     "prediction is made. Useful for getting the annotated "
+                     "protein sequences."),
+                    checker_function=check_augustus_true_false),
+            _Option(["--contentmodels", "contentmodels"],
+                    ("If 'off' the content models are disabled (all "
+                     "emissions uniformly 1/4). The content models are; "
+                     "coding region Markov chain (emiprobs), initial k-mers "
+                     "in coding region (Pls), intron and intergenic regin "
+                     "Markov chain. This option is intended for special "
+                     "applications that require judging gene structures "
+                     "from the signal models only, e.g. for predicting "
+                     "the effect of SNPs or mutations on splicing. For "
+                     "all typical gene predictions, this should be true. "
+                     "Default: on"),
+                    checker_function=check_augustus_on_off),
+            _Option(["--progress", "progress"],
+                    "Print running progress reports.",
+                    checker_function=check_augustus_true_false),
+            _Option(["--uniqueGeneId", "unique_gene_id"],
+                    "If true, output gene identifyers like this: seqname.gN",
+                    checker_function=check_augustus_true_false),
+            _Option(["--allow_hinted_splicesites", "allow_hinted_splicesites"],
+                    ("Allow non-standard splice sites when supported by "
+                     "hints. Provide as a comma separated list e.g. atac"),
+                    checker_function=check_is_str),
+            _Option(["--alnfile", "alnfile"],
+                    "The multiple genome alignment file to use for CPG.",
+                    checker_function=check_is_str,
+                    filename=True),
+            _Option(["--min_intron_len", "min_intron_len"],
+                    "The minimum allowable intron length in bp.",
+                    checker_function=check_is_positive_int),
+            _Option(["--softmasking", "softmasking"],
+                    "Softmask sequences.",
+                    checker_function=check_augustus_on_off),
+            _Option(["--errfile", "errfile"],
+                    "Output stderr to a file."
+                    checker_function=check_is_str,
+                    filename=True),
+
         ]
-        proteinprofile: Optional[str] = None
-        outfile: Optional[str] = None
-        prediction_start: Optional[int] = None
-        prediction_end: Optional[int] = None
-        no_inframe_stop: bool = False
-        noprediction: bool = False
-        unique_gene_id: bool = False
-        max_dna_piece_size: int = 200000
-        progress: bool = False
-        gff3: AugustusOnOff = AugustusOnOff.ON
-        utr: AugustusOnOff = AugustusOnOff.OFF
-        introns: AugustusOnOff = AugustusOnOff.ON
-        start: AugustusOnOff = AugustusOnOff.ON
-        stop: AugustusOnOff = AugustusOnOff.ON
-        protein: AugustusOnOff = AugustusOnOff.OFF
-        cds: AugustusOnOff = AugustusOnOff.OFF
-        stop_codon_excluded_from_cds: bool = True
-        codingseq: AugustusOnOff = AugustusOnOff.OFF
-        contentmodels: AugustusOnOff = AugustusOnOff.ON
+        super().__init__(cmd, **kwargs)
         return
+
+
+"""
+Remaining augustus options.
+Unsure what they do, some are only used for training, some for CPG mode.
+
+"/augustus/verbosity",
+"/BaseCount/weighingType",
+"/BaseCount/weightMatrixFile",
+"bridge_genicpart_bonus",
+"canCauseAltSplice",
+"capthresh",
+"checkExAcc",
+"codonAlignmentFile",
+"complete_genes",
+"/CompPred/assmotifqthresh",
+"/CompPred/assqthresh",
+"/CompPred/dssqthresh",
+"/CompPred/compSigScoring",
+"/CompPred/conservation",
+"/CompPred/covPen",
+"/CompPred/ec_score",
+"/CompPred/exon_gain",
+"/CompPred/exon_loss",
+"/CompPred/ali_error",
+"/CompPred/computeNumSubs",
+"/CompPred/maxIterations",
+"/CompPred/mil_factor",
+"/CompPred/ec_factor",
+"/CompPred/ec_addend",
+"/CompPred/ec_thold",
+"/CompPred/ic_thold",
+"/CompPred/genesWithoutUTRs",
+"/CompPred/liftover_all_ECs",
+"/CompPred/logreg",
+"/CompPred/maxCov",
+"/CompPred/omega",
+"/CompPred/num_omega",
+"/CompPred/num_features",
+"/CompPred/scale_codontree",
+"/CompPred/oeExtensionWidth",
+"/CompPred/onlySampledECs",
+"/CompPred/only_species",
+"/CompPred/outdir_orthoexons",
+"/CompPred/outdir",
+"/CompPred/printOrthoExonAli",
+"/CompPred/printConservationWig",
+"/CompPred/phylo_factor",
+"/CompPred/phylo_model",
+"/CompPred/dd_factor",
+"/CompPred/dd_rounds",
+"/CompPred/dd_step_rule",
+"/CompPred/dualdecomp",
+"/CompPred/overlapcomp",
+"/CompPred/lambda",
+"/Constant/almost_identical_maxdiff",
+"/Constant/amberprob",
+"/Constant/ass_end",
+"/Constant/ass_maxbinsize",
+"/Constant/ass_start",
+"/Constant/ass_upwindow_size",
+"/Constant/decomp_num_at",
+"/Constant/decomp_num_gc",
+"/Constant/decomp_num_steps",
+"/Constant/dss_end",
+"/Constant/dss_maxbinsize",
+"/Constant/dss_start",
+"/Constant/gc_range_max",
+"/Constant/gc_range_min",
+"/Constant/init_coding_len",
+"/Constant/intterm_coding_len",
+"/Constant/max_contra_supp_ratio",
+"/Constant/min_coding_len",
+"/Constant/ochreprob",
+"/Constant/opalprob",
+"/Constant/probNinCoding",
+"/Constant/subopt_transcript_threshold",
+"/Constant/tis_maxbinsize",
+"/Constant/trans_init_window",
+"/Constant/tss_upwindow_size",
+"CRF",
+"CRF_N",
+"CRF_TRAIN",
+"CRFtrainCDS",
+"CRFtrainIntron",
+"CRFtrainIgenic",
+"CRFtrainSS",
+"CRFtrainUTR",
+"CRFtrainTIS",
+"dbaccess",
+"dbhints",
+"/EHMMTraining/state00",
+"/EHMMTraining/state01",
+"/EHMMTraining/state02",
+"/EHMMTraining/state03",
+"/EHMMTraining/statecount",
+"/EHMMTraining/trainfile",
+"emiprobs",
+"evalset",
+"exoncands",
+"/ExonModel/etorder",
+"/ExonModel/etpseudocount",
+"/ExonModel/exonlengthD",
+"/ExonModel/infile",
+"/ExonModel/k",
+"/ExonModel/lenboostE",
+"/ExonModel/lenboostL",
+"/ExonModel/maxexonlength",
+"/ExonModel/minexonlength",
+"/ExonModel/minPatSum",
+"/ExonModel/minwindowcount",
+"/ExonModel/outfile",
+"/ExonModel/patpseudocount",
+"/ExonModel/slope_of_bandwidth",
+"/ExonModel/tisalpha",
+"/ExonModel/tis_motif_memory",
+"/ExonModel/tis_motif_radius",
+"/ExonModel/verbosity",
+"exonnames",
+"GCwinsize",
+"GD_stepsize",
+"/genbank/verbosity",
+"/HMMTraining/savefile",
+"/IGenicModel/infile",
+"/IGenicModel/k",
+"/IGenicModel/outfile",
+"/IGenicModel/patpseudocount",
+"/IGenicModel/verbosity",
+"/IntronModel/allow_dss_consensus_gc",
+"/IntronModel/ass_motif_memory",
+"/IntronModel/ass_motif_radius",
+"/IntronModel/asspseudocount",
+"/IntronModel/d",
+"/IntronModel/dssneighborfactor",
+"/IntronModel/dsspseudocount",
+"/IntronModel/infile",
+"/IntronModel/k",
+"/IntronModel/minwindowcount",
+"/IntronModel/non_ag_ass_prob",
+"/IntronModel/non_gt_dss_prob",
+"/IntronModel/outfile",
+"/IntronModel/patpseudocount",
+"/IntronModel/sf_with_motif",
+"/IntronModel/slope_of_bandwidth",
+"/IntronModel/splicefile",
+"/IntronModel/ssalpha",
+"/IntronModel/verbosity",
+"keep_viterbi",
+"label_flip_prob",
+"learning_rate",
+"lossweight",
+"locustree",
+"maxDNAPieceSize",
+"maxOvlp",
+"maxtracks",
+"max_sgd_inter",
+"mea",
+"mea_evaluation",
+"/MeaPrediction/no_compatible_edges",
+"/MeaPrediction/alpha_E",
+"/MeaPrediction/alpha_I",
+"/MeaPrediction/x0_E",
+"/MeaPrediction/x0_I",
+"/MeaPrediction/x1_E",
+"/MeaPrediction/x1_I",
+"/MeaPrediction/y0_E",
+"/MeaPrediction/y0_I",
+"/MeaPrediction/i1_E",
+"/MeaPrediction/i1_I",
+"/MeaPrediction/i2_E",
+"/MeaPrediction/i2_I",
+"/MeaPrediction/j1_E",
+"/MeaPrediction/j1_I",
+"/MeaPrediction/j2_E",
+"/MeaPrediction/j2_I",
+"/MeaPrediction/weight_base",
+"/MeaPrediction/r_be",
+"/MeaPrediction/r_bi",
+"/MeaPrediction/weight_exon",
+"/MeaPrediction/weight_gene",
+"/MeaPrediction/weight_utr",
+"minexonintronprob",
+"minmeanexonintronprob",
+"optCfgFile",
+"printHints",
+"printMEA",
+"printOEs",
+"printSampled",
+"printGeneRangesBED",
+"printGeneRangesGFF",
+"param_outfile",
+"print_blocks",
+"print_utr",
+"/ProteinModel/allow_truncated",
+"/ProteinModel/exhaustive_substates",
+"/ProteinModel/block_threshold_spec",
+"/ProteinModel/block_threshold_sens",
+"/ProteinModel/blockpart_threshold_spec",
+"/ProteinModel/blockpart_threshold_sens",
+"/ProteinModel/global_factor_threshold",
+"/ProteinModel/absolute_malus_threshold",
+"/ProteinModel/invalid_score",
+"/ProteinModel/weight",
+"referenceFile",
+"refSpecies",
+"rescaleBoni",
+"rLogReg",
+"scorediffweight", // temp
+"speciesfilenames",
+"tieIgenicIntron",
+"trainFeatureFile",
+"translation_table",
+"treefile",
+"truncateMaskedUTRs",
+"tss",
+"tts",
+"uniqueCDS",
+"useAminoAcidRates",
+"useNonCodingModel",
+"use_sgd",
+"useTFprob",
+"/UtrModel/d_polya_cleavage_max",
+"/UtrModel/d_polya_cleavage_min",
+"/UtrModel/d_polyasig_cleavage",
+"/UtrModel/d_tss_tata_max",
+"/UtrModel/d_tss_tata_min",
+"/UtrModel/exonlengthD",
+"/UtrModel/infile",
+"/UtrModel/k",
+"/UtrModel/max3singlelength",
+"/UtrModel/max3termlength",
+"/UtrModel/maxexonlength",
+"/UtrModel/minwindowcount",
+"/UtrModel/outfile",
+"/UtrModel/patpseudocount",
+"/UtrModel/prob_polya",
+"/UtrModel/slope_of_bandwidth",
+"/UtrModel/tata_end",
+"/UtrModel/tata_pseudocount",
+"/UtrModel/tata_start",
+"/UtrModel/tss_end",
+"/UtrModel/tss_start",
+"/UtrModel/tssup_k",
+"/UtrModel/tssup_patpseudocount",
+"/UtrModel/tts_motif_memory",
+"/UtrModel/utr3patternweight",
+"/UtrModel/utr5patternweight",
+"/UtrModel/utr3prepatternweight",
+"/UtrModel/utr5prepatternweight",
+"/UtrModel/verbosity"
+"""
