@@ -1,112 +1,112 @@
-from typing import Tuple
+from typing import List
 from typing import Union
 
 from Bio.Application import AbstractCommandline, _Option, _Argument
 
 
-def check_option_value(valid: Tuple[str], string: str) -> None:
+def check_option_value(valid: List[str], string: str) -> bool:
     assert isinstance(string, str)
     if string not in valid:
         raise ValueError(
             f"Invalid option value '{string}' received. "
             f"Expected one of {repr(valid)}."
         )
-    return
+    return True
 
 
-def check_augustus_strand(string: str) -> None:
-    valid = ("both", "forward", "backward")
+def check_augustus_strand(string: str) -> bool:
+    valid = ["both", "forward", "backward"]
     check_option_value(valid, string)
-    return
+    return True
 
 
-def check_augustus_gene_model(string: str) -> None:
-    valid = ("partial", "intronless", "complete", "atleastone", "exactlyone")
+def check_augustus_gene_model(string: str) -> bool:
+    valid = ["partial", "intronless", "complete", "atleastone", "exactlyone"]
     check_option_value(valid, string)
-    return
+    return True
 
 
-def check_augustus_on_off(string: str) -> None:
-    valid = ("on", "off")
+def check_augustus_on_off(string: str) -> bool:
+    valid = ["on", "off"]
     check_option_value(valid, string)
-    return
+    return True
 
 
-def check_augustus_true_false(string: str) -> None:
-    valid = ("true", "false")
+def check_augustus_true_false(string: str) -> bool:
+    valid = ["true", "false"]
     check_option_value(valid, string)
-    return
+    return True
 
 
-def check_is_str(string: str) -> None:
+def check_is_str(string: str) -> bool:
     if not isinstance(string, str):
         raise ValueError(
             f"The parameter must be a string. You provided '{string}'."
         )
-    return
+    return True
 
 
-def check_is_int(num: int) -> None:
+def check_is_int(num: int) -> bool:
     if not isinstance(num, int):
         raise ValueError(
             f"The parameter must be an integer. You provided '{num}'."
         )
-    return
+    return True
 
 
-def check_is_positive_int(num: int) -> None:
+def check_is_positive_int(num: int) -> bool:
     check_is_int(num)
     if num < 0:
         raise ValueError(
             f"The parameter cannot be negative. You provided '{num}'."
         )
-    return
+    return True
 
 
-def check_is_int_in_range(num: int, min: int, max: int) -> None:
+def check_is_int_in_range(num: int, min: int, max: int) -> bool:
     check_is_int(num)
     if not (min <= num <= max):
         raise ValueError(
             f"The parameter must be between '{min}' and '{max}'. "
             f"You provided '{num}'."
         )
-    return
+    return True
 
 
-def check_is_numeric(num: Union[int, float]) -> None:
+def check_is_numeric(num: Union[int, float]) -> bool:
     if not isinstance(num, (int, float)):
         raise ValueError(
             f"The parameter must be a number. You provided '{num}'."
         )
-    return
+    return True
 
 
-def check_is_positive_numeric(num: Union[int, float]) -> None:
+def check_is_positive_numeric(num: Union[int, float]) -> bool:
     check_is_numeric(num)
     if num < 0:
         raise ValueError(
             f"The parameter cannot be negative. You provided '{num}'."
         )
-    return
+    return True
 
 
 def check_is_numeric_in_range(
     num: Union[int, float],
     min: Union[int, float],
     max: Union[int, float]
-) -> None:
+) -> bool:
     check_is_numeric(num)
     if not (min <= num <= max):
         raise ValueError(
             f"The parameter must be between '{min}' and '{max}'. "
             f"You provided '{num}'."
         )
-    return
+    return True
 
 
-def check_is_probability(num: Union[int, float]) -> None:
+def check_is_probability(num: Union[int, float]) -> bool:
     check_is_numeric_in_range(num, 0, 1)
-    return
+    return True
 
 
 class Augustus(AbstractCommandline):
@@ -325,7 +325,7 @@ class Augustus(AbstractCommandline):
                     "Softmask sequences.",
                     checker_function=check_augustus_on_off),
             _Option(["--errfile", "errfile"],
-                    "Output stderr to a file."
+                    "Output stderr to a file.",
                     checker_function=check_is_str,
                     filename=True),
 
