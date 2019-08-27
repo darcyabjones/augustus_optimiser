@@ -30,6 +30,16 @@ def check_is_positive_int(num: int) -> bool:
 class ParsEval(AbstractCommandline):
 
     def __init__(self, cmd="parseval", **kwargs):
+        """ Construct and evaluate aegean parseval commands.
+
+        Example
+        >>> x = ParsEval(outformat="text",
+        ...              reference="ref.gff3",
+        ...              prediction="pred.gff3")
+        >>> print(x)
+        parseval --outformat text ref.gff3 pred.gff3
+        """
+
         self.program_name = cmd
         self.parameters = [
             _Switch(["--debug", "debug"],
@@ -38,7 +48,9 @@ class ParsEval(AbstractCommandline):
                     "Print help message and exit"),
             _Option(["--delta", "delta"],
                     "Extend gene loci by this many nucleotides.",
-                    checker_function=check_is_positive_int),
+                    checker_function=check_is_positive_int,
+                    equate=False,
+                    ),
             _Switch(["--verbose", "verbose"],
                     "Print verbose warning messages"),
             _Switch(["--version", "version"],
@@ -50,7 +62,9 @@ class ParsEval(AbstractCommandline):
                      "will create a single file; in 'html' mode, "
                      "will create a directory."),
                     checker_function=check_is_str,
-                    filename=True),
+                    filename=True,
+                    equate=False,
+                    ),
             _Option(["--outformat", "outformat"],
                     ("Indicate desired output format; possible "
                      "options: 'csv', 'text', or 'html' "
@@ -58,7 +72,9 @@ class ParsEval(AbstractCommandline):
                      "will create a single file; in 'html' mode, "
                      "will create a directory."),
                     checker_function=check_is_str,
-                    filename=True),
+                    filename=True,
+                    equate=False,
+                    ),
             _Switch(["--nogff3", "nogff3"],
                     ("Do no print GFF3 output corresponding to each "
                      "comparison.")),
@@ -66,7 +82,9 @@ class ParsEval(AbstractCommandline):
                     ("File/directory to which output will be "
                      "written; default is the terminal (STDOUT)."),
                     checker_function=check_is_str,
-                    filename=True),
+                    filename=True,
+                    equate=False,
+                    ),
             _Switch(["--nopng", "nopng"],
                     ("In HTML output mode, skip generation of PNG "
                      "graphics for each gene locus.")),
@@ -77,10 +95,14 @@ class ParsEval(AbstractCommandline):
                     "Force overwrite of any existing output files."),
             _Option(["--refrlabel", "refrlabel"],
                     "Optional label for reference annotations.",
-                    checker_function=check_is_str),
+                    checker_function=check_is_str,
+                    equate=False,
+                    ),
             _Option(["--predlabel", "predlabel"],
                     "Optional label for prediction annotations.",
-                    checker_function=check_is_str),
+                    checker_function=check_is_str,
+                    equate=False,
+                    ),
             _Switch(["--makefilter", "makefilter"],
                     ("Create a default configuration file for "
                      "filtering reported results and quit, "
@@ -88,21 +110,25 @@ class ParsEval(AbstractCommandline):
             _Option(["--filterfile", "filterfile"],
                     ("Use the indicated configuration file to "
                      "filter reported results."),
-                    checker_function=check_is_str),
+                    checker_function=check_is_str,
+                    equate=False,
+                    ),
             _Option(["--maxtrans", "maxtrans"],
                     ("Maximum transcripts allowed per locus; use 0 "
                      "to disable limit; default is 32"),
-                    checker_function=check_is_positive_int),
+                    checker_function=check_is_positive_int,
+                    equate=False,
+                    ),
             _Argument(["reference"],
                       "The reference gff3.",
                       checker_function=check_is_str,
                       filename=True,
-                      required=True),
+                      is_required=True),
             _Argument(["prediction"],
                       "The prediction gff3.",
                       checker_function=check_is_str,
                       filename=True,
-                      required=True),
+                      is_required=True),
         ]
 
         super().__init__(cmd, **kwargs)

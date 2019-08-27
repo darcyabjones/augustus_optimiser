@@ -112,13 +112,16 @@ def check_is_probability(num: Union[int, float]) -> bool:
 class Augustus(AbstractCommandline):
 
     def __init__(self, cmd="augustus", **kwargs):
+        """ Create and execute augustus commands.
+
+        Examples:
+        >>> cmd = Augustus(infile="test.fasta", species="test")
+        >>> print(cmd)
+        augustus --species=test test.fasta
+        """
+
         self.program_name = cmd
         self.parameters = [
-            _Argument(["infile"],
-                      "The input fasta or genbank file to run analysis on.",
-                      checker_function=check_is_str,
-                      filename=True,
-                      is_required=True),
             _Option(["--species", "species"],
                     "The species to use from the config path.",
                     is_required=True,
@@ -328,7 +331,11 @@ class Augustus(AbstractCommandline):
                     "Output stderr to a file.",
                     checker_function=check_is_str,
                     filename=True),
-
+            _Argument(["infile"],
+                      "The input fasta or genbank file to run analysis on.",
+                      checker_function=check_is_str,
+                      filename=True,
+                      is_required=True),
         ]
         super().__init__(cmd, **kwargs)
         return

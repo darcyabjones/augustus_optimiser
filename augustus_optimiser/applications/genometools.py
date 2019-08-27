@@ -30,9 +30,17 @@ def check_is_positive_int(num: int) -> bool:
 class GFF3(AbstractCommandline):
 
     def __init__(self, cmd="gt", **kwargs):
+        """ Construct and evaluate genometools gff3 commands.
+
+        Example
+        >>> x = GFF3(infile="test.gff3", sort=True)
+        >>> print(x)
+        gt gff3 -sort test.gff3
+        """
+
         self.program_name = f"{cmd} gff3"
         self.parameters = [
-            _StaticArgument(["gff3"]),
+            _StaticArgument("gff3"),
             _Switch(["-sort", "sort"],
                     ("Sort the GFF3 features (memory consumption is "
                      "proportional to the input file size(s))")
@@ -60,7 +68,7 @@ class GFF3(AbstractCommandline):
                      "parser tries to treat them as a multi-line feature. "
                      "This requires at least matching sequence IDs and types")
                     ),
-            _Switch(["-addids=no", "dont_addids"],
+            _Switch(["-addids", "dont_addids"],
                     "add missing '##sequence-region' lines automatically"
                     ),
             _Switch(["-fixregionboundaries", "fixregionboundaries"],
@@ -72,15 +80,19 @@ class GFF3(AbstractCommandline):
                     ),
             _Option(["-offset", "offset"],
                     "transform all features by the given offset",
-                    checker_function=check_is_positive_int),
+                    checker_function=check_is_positive_int,
+                    equate=False,
+                    ),
             _Option(["-offsetfile", "offsetfile"],
                     "transform all features by the offsets given in file",
                     checker_function=check_is_str,
                     filename=True,
+                    equate=False,
                     ),
             _Option(["-setsource", "setsource"],
                     "set the source value (2nd column) of each feature",
                     checker_function=check_is_str,
+                    equate=False,
                     ),
             _Option(["-typecheck", "typecheck"],
                     ("use an ontology given in an OBO file to validate "
@@ -107,7 +119,7 @@ class GFF3(AbstractCommandline):
                     checker_function=check_is_str,
                     filename=True,
                     ),
-            _Switch(["-show=no", "noshow"],
+            _Switch(["-show", "noshow"],
                     "don't show GFF3 output"
                     ),
             _Switch(["-v", "verbose"],
@@ -116,12 +128,14 @@ class GFF3(AbstractCommandline):
             _Option(["-width", "width"],
                     ("set output width for FASTA sequence printing, "
                      "(0 disables formatting)"),
-                    checker_function=check_is_positive_int
+                    checker_function=check_is_positive_int,
+                    equate=False,
                     ),
             _Option(["-o", "outfile"],
                     "redirect output to specified file",
                     checker_function=check_is_str,
                     filename=True,
+                    equate=False,
                     ),
             _Switch(["-gzip", "gzip"],
                     "write gzip compressed output file."
@@ -136,7 +150,7 @@ class GFF3(AbstractCommandline):
             _Switch(["-version", "version"],
                     "display version information and exit"
                     ),
-            _Argument(["infile"],
+            _Argument(["infile", "infile2"],
                       "The GFF3 file to operate on.",
                       checker_function=check_is_str,
                       filename=True,

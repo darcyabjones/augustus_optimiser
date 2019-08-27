@@ -1,15 +1,34 @@
-sources: ["M", "I", "E"]
+sources: ["M", "I", "E", "T", "P", "RM"]
 source_parameters:
   - source: "E"
+    parameter: ["choose", ["individual_liability", "1group1gene"]]
+  - source: "P"
+    parameter: ["choose", ["individual_liability", "1group1gene"]]
+  - source: "R"
     parameter: ["choose", ["individual_liability", "1group1gene"]]
 
 weights:
   - kind: "exonpart"
-    malus: ["beta", 8.0, 1.0]
-    local_malus: ["beta", 6, 1]
+    malus: ["trunc", 0.1, 1.0, ["beta", 12.0, 1.0]]
+    local_malus: ["trunc", 0.1, 1.0, ["beta", 10.0, 1.5]]
+  - kind: "CDSpart"
+    malus: ["trunc", 0.1, 1.0, ["beta", 12.0, 1.0]]
+    local_malus: ["trunc", 0.1, 1.0, ["beta", 10.0, 1.5]]
+  - kind: "UTRpart"
+    malus: ["trunc", 0.1, 1.0, ["beta", 12.0, 1.0]]
+    local_malus: ["trunc", 0.1, 1.0, ["beta", 10.0, 1.5]]
+  - kind: "ass"
+    malus: ["trunc", 0.1, 1.0, ["beta", 30.0, 1.0]]
+    local_malus: ["trunc", 0.05, 1.0, ["beta", 3.0, 2.0]]
+  - kind: "dss"
+    malus: ["trunc", 0.1, 1.0, ["beta", 30.0, 1.0]]
+    local_malus: ["trunc", 0.05, 1.0, ["beta", 3.0, 2.0]]
   - kind: "intron"
-    malus: ["uniform", 0.5, 1.0]
-    bonus: ["uniform", 1.0, 10]
+    malus: ["trunc", 0.1, 1.0, ["beta", 6.0, 1.0]]
+  - kind: "start"
+    malus: ["trunc", 0.1, 1.0, ["beta", 6.0, 1.0]]
+  - kind: "stop"
+    malus: ["trunc", 0.1, 1.0, ["beta", 6.0, 1.0]]
 
 
 source_weights:
@@ -19,17 +38,30 @@ source_weights:
   - kind: "intron"
     source: "E"
     weight: ["expuniform", 10, 0, 20]
-  - kind: "intronpart"
-    source: "I"
-    boundaries: ["seq", 4, ["range", 1, 10]]
-    weights: ["sample", 5, ["chi", 1, 1, 1]]
-  - kind: "exon"
-    source: "E"
+  - kind: "intron"
+    source: "P"
     weight: ["expuniform", 10, 0, 20]
   - kind: "exonpart"
     source: "E"
-    weight: ["gamma", 1, 1, 30]
+    weight: ["gamma", 1.5, 1, 100]
+  - kind: "CDSpart"
+    source: "P"
+    weight: ["gamma", 1.5, 1, 100]
+  - kind: "CDSpart"
+    source: "T"
+    weight: ["gamma", 1.5, 1, 100]
   - kind: "ass"
     source: "I"
-    boundaries: [1, 6, 12]
-    weights: [1, ["uniform", 1.01, 2.99], ["uniform", 3.0, 9.99], 10]
+    weight: ["expuniform", 10, 0, 10]
+  - kind: "dss"
+    source: "I"
+    weight: ["expuniform", 10, 0, 10]
+  - kind: "ass"
+    source: "E"
+    weight: ["expuniform", 10, 0, 10]
+  - kind: "dss"
+    source: "E"
+    weight: ["expuniform", 10, 0, 10]
+  - kind: "nonexonpart"
+    source: "RM"
+    weight: ["chi", 1, 1, 2]

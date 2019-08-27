@@ -76,6 +76,7 @@ setup(
         'biopython>=1.70',
         "gffpal @ https://github.com/darcyabjones/gffpal/archive/master.zip#egg=gffpal=0.0.0",
         "scipy",
+        "PyYAML",
         ],
 
     # List additional groups of dependencies here (e.g. development

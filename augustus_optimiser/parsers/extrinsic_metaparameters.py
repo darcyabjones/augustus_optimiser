@@ -12,11 +12,14 @@ from augustus_optimiser.hints import HintRowFactory, HintCellFactory
 from augustus_optimiser.hints import HintKind
 
 from augustus_optimiser.errors import DistParseError, ConfigParseError
-from augustus_optimiser.parser import parse_float_dist, parse_float_list
-from augustus_optimiser.parser import parse_str_dist
+from augustus_optimiser.parsers.distribution_functions import (
+    parse_float_dist, parse_float_list, parse_str_dist
+)
 
 
 def parser(config: Dict[Any, Any]) -> HintConfigFactory:
+    """ Parses a dictionary representation of the config file. """
+
     sources = parse_sources(config.get("sources", None))
     source_parameters = parse_source_parameters(
         config.get("source_parameters", None)

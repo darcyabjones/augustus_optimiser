@@ -188,7 +188,7 @@ def parse_int_dist(elem: Any) -> Distribution[int]:
             "Recieved invalid input: {repr(elem)}."
         )
 
-    if isinstance(parsed_elem, dist.PMF):
+    if isinstance(parsed_elem, (dist.PMF, dist.Trunc)):
         return parsed_elem
     else:
         raise DistParseError(
@@ -239,7 +239,7 @@ def parse_float_dist(elem: Any) -> DistributionIF:
             "Recieved invalid input: {repr(elem)}."
         )
 
-    if isinstance(parsed_elem, (dist.PDF, dist.PMF)):
+    if isinstance(parsed_elem, (dist.PDF, dist.PMF, dist.Trunc)):
         return parsed_elem
     else:
         raise DistParseError(
