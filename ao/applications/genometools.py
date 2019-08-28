@@ -1,5 +1,6 @@
 from Bio.Application import AbstractCommandline
 from Bio.Application import _Option, _Argument, _StaticArgument, _Switch
+from Bio.Application import _ArgumentList
 
 
 def check_is_str(string: str) -> bool:
@@ -155,6 +156,57 @@ class GFF3(AbstractCommandline):
                       checker_function=check_is_str,
                       filename=True,
                       is_required=True)
+        ]
+
+        super().__init__(cmd, **kwargs)
+        return
+
+
+class Merge(AbstractCommandline):
+
+    def __init__(self, cmd="gt", **kwargs):
+        """ Construct and evaluate genometools merge commands.
+
+        Example
+        >>> x = Merge(infile="test.gff3", sort=True)
+        >>> print(x)
+        gt merge -sort test.gff3
+        """
+
+        self.program_name = f"{cmd} merge"
+        self.parameters = [
+            _StaticArgument("merge"),
+            _Switch(["-tidy", "tidy"],
+                    ("Try to tidy the GFF3 files up during parsing.")
+                    ),
+            _Switch(["-retainids", "retainids"],
+                    ("when available, use the original IDs provided in the "
+                     "source file")
+                    ),
+            _Option(["-o", "outfile"],
+                    "redirect output to specified file",
+                    checker_function=check_is_str,
+                    filename=True,
+                    equate=False,
+                    ),
+            _Switch(["-gzip", "gzip"],
+                    "write gzip compressed output file."
+                    ),
+            _Switch(["-bzip2", "bzip2"],
+                    "write bzip2 compressed output file.",
+                    ),
+            _Switch(["-force", "force"],
+                    "force writing to output file",
+                    ),
+            _Switch(["-help", "help"], "Show help and exit"),
+            _Switch(["-version", "version"],
+                    "display version information and exit"
+                    ),
+            _ArgumentList(["infiles"],
+                          "The GFF3 files to operate on.",
+                          checker_function=check_is_str,
+                          filename=True,
+                          is_required=True)
         ]
 
         super().__init__(cmd, **kwargs)

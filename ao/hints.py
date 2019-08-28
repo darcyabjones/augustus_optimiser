@@ -10,12 +10,12 @@ from typing import Sequence, Mapping
 from typing import NamedTuple
 
 # from augustus_optimiser.distributions import DistributionIF
-from augustus_optimiser.distributions import AOList
-from augustus_optimiser.distributions import FloatConst, StrConst
-from augustus_optimiser.distributions import Distribution, DistributionIF
-from augustus_optimiser.distributions import Choose
+from ao.distributions import AOList
+from ao.distributions import FloatConst, StrConst
+from ao.distributions import Distribution, DistributionIF
+from ao.distributions import Choose
 
-from augustus_optimiser.errors import DistValueError
+from ao.errors import DistValueError
 
 
 class HintKind(enum.Enum):
@@ -139,10 +139,10 @@ class HintCellFactory(object):
         """ Get the string representation of a hint cell.
 
         Examples:
-        >>> from augustus_optimiser.distributions import Seq
-        >>> from augustus_optimiser.distributions import Range
-        >>> from augustus_optimiser.distributions import Uniform
-        >>> from augustus_optimiser.distributions import Sample
+        >>> from ao.distributions import Seq
+        >>> from ao.distributions import Range
+        >>> from ao.distributions import Uniform
+        >>> from ao.distributions import Sample
 
         >>> HintCellFactory('M').get()
         HintCell(source='M', boundaries=[], boni=[1.0])
@@ -218,7 +218,7 @@ class HintRowFactory(object):
 
         Examples:
 
-        >>> from augustus_optimiser.distributions import Uniform
+        >>> from ao.distributions import Uniform
         >>> HintRowFactory(HintKind.INTRON, bonus=Uniform(1, 2))
         HintRowFactory(HintKind.INTRON,
                 Uniform(FloatConst(1.0), FloatConst(2.0)),

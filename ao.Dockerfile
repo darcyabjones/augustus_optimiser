@@ -317,7 +317,7 @@ RUN  set -eu \
   && . /build/base.sh \
   && apt-get update \
   && apt_install_from_file /build/apt/*.txt \
-  && apt-get install -y --no-install-recommends python3 python3-pip python3-setuptools python3-wheel \
+  && apt-get install -y --no-install-recommends libmpich-dev mpich python3 python3-dev python3-pip python3-setuptools python3-wheel \
   && rm -rf /var/lib/apt/lists/* \
   && cat /build/apt/*.txt >> "${APT_REQUIREMENTS_FILE}"
 

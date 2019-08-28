@@ -3,15 +3,14 @@ from typing import Sequence
 from typing import Optional
 from typing import Callable
 from typing import Union
-from typing import List
 from typing import TypeVar
 
-from augustus_optimiser.distributions import Distribution
-from augustus_optimiser.distributions import DistributionIF
-from augustus_optimiser.distributions import AOList
-from augustus_optimiser import distributions as dist
+from ao.distributions import Distribution
+from ao.distributions import DistributionIF
+from ao.distributions import AOList
+from ao import distributions as dist
 
-from augustus_optimiser.errors import DistParseError
+from ao.errors import DistParseError
 
 
 T = TypeVar('T')
@@ -895,7 +894,13 @@ def parse_trunc_float(elems: Sequence[Any]) -> dist.Trunc[Union[float, int]]:
     # Return from check float param is DistributionIF
     # The type system isn't expressive enough to destructure to
     # Trunc[Union[int, float]].
-    this_dist: Distribution[Any] = check_float_param(2, elems, "dist", str_func)
+    this_dist: Distribution[Any] = check_float_param(
+        2,
+        elems,
+        "dist",
+        str_func
+    )
+
     return dist.Trunc(min_, max_, this_dist)
 
 

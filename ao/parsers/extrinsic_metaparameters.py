@@ -2,17 +2,17 @@ from typing import Any
 from typing import Dict, List, Tuple
 from typing import Union
 
-from augustus_optimiser.distributions import Distribution, DistributionIF
-from augustus_optimiser.distributions import FloatConst
-from augustus_optimiser.distributions import AOList
+from ao.distributions import Distribution, DistributionIF
+from ao.distributions import FloatConst
+from ao.distributions import AOList
 
-from augustus_optimiser.hints import HintConfigFactory
-from augustus_optimiser.hints import SourceParameterFactory
-from augustus_optimiser.hints import HintRowFactory, HintCellFactory
-from augustus_optimiser.hints import HintKind
+from ao.hints import HintConfigFactory
+from ao.hints import SourceParameterFactory
+from ao.hints import HintRowFactory, HintCellFactory
+from ao.hints import HintKind
 
-from augustus_optimiser.errors import DistParseError, ConfigParseError
-from augustus_optimiser.parsers.distribution_functions import (
+from ao.errors import DistParseError, ConfigParseError
+from ao.parsers.distribution_functions import (
     parse_float_dist, parse_float_list, parse_str_dist
 )
 

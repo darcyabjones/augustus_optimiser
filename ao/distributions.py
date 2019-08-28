@@ -14,7 +14,7 @@ import numpy as np
 from scipy import stats
 
 
-from augustus_optimiser.errors import DistDomainError, DistValueError
+from ao.errors import DistDomainError, DistValueError
 
 
 # Genetic type var for baseclassing Distribution.

@@ -5,7 +5,7 @@ from typing import Optional
 from typing import List, Mapping, Dict, Tuple, Iterator
 from typing import Any, Union
 
-from augustus_optimiser.higher import fmap
+from ao.higher import fmap
 
 
 WHITESPACE = re.compile(r"\s+")

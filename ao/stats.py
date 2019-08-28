@@ -2,9 +2,9 @@ from typing import NamedTuple
 from typing import Any, Union, Optional
 from typing import List, Mapping, Dict
 
-from augustus_optimiser.higher import fmap
-from augustus_optimiser.hints import HintConfig
-from augustus_optimiser.parsers.parseval_summary import ParsEvalSummary
+from ao.higher import fmap
+from ao.hints import HintConfig
+from ao.parsers.parseval_summary import ParsEvalSummary
 
 
 class AnnotationStatistics(NamedTuple):

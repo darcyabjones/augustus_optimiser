@@ -2,8 +2,8 @@ import sys
 import argparse
 
 
-from augustus_optimiser.errors import AOError, ECode
-from augustus_optimiser.scripts.extrinsic import extrinsic, cli_extrinsic
+from ao.errors import AOError, ECode
+from ao.extrinsic import run_extrinsic, cli_extrinsic, EXTRINSIC_DESC
 
 
 def cli(prog, args):
@@ -17,7 +17,7 @@ def cli(prog, args):
 
     extrinsic_subparser = subparsers.add_parser(
         "extrinsic",
-        help="Generate and evaluate many extrinsic hint parameters."
+        help=EXTRINSIC_DESC
     )
 
     cli_extrinsic(extrinsic_subparser)
@@ -31,13 +31,22 @@ def cli(prog, args):
     return parsed
 
 
-def main():
-    args = cli(prog=sys.argv[0], args=sys.argv[1:])
+def cli_not_subparser(prog, args, desc, subparser):
+
+    parser = argparse.ArgumentParser(
+        prog=prog,
+        description=desc
+    )
+
+    subparser(parser)
+    parsed = parser.parse_args(args)
+
+    return parsed
+
+
+def main_error_handler(args, runner):
     try:
-        if args.subparser_name == "extrinsic":
-            extrinsic(args)
-        else:
-            raise ValueError("I shouldn't reach this point ever")
+        runner(args)
     except AOError as e:
         print(f"Error: {e.msg}")
         sys.exit(e.ecode)
@@ -61,4 +70,13 @@ def main():
             "authors.\nWe will be extremely grateful!\n\n"
         ), file=sys.stderr)
         raise e
+    return
+
+
+def main():
+    args = cli(prog="ao", args=sys.argv[1:])
+    if args.subparser_name == "extrinsic":
+        main_error_handler(args, run_extrinsic)
+    else:
+        raise ValueError("I shouldn't reach this point ever")
     return
