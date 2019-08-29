@@ -4,6 +4,7 @@ import argparse
 
 from ao.errors import AOError, ECode
 from ao.extrinsic import run_extrinsic, cli_extrinsic, EXTRINSIC_DESC
+from ao.extract import run_extract, cli_extract, EXTRACT_DESC
 
 
 def cli(prog, args):
@@ -21,6 +22,13 @@ def cli(prog, args):
     )
 
     cli_extrinsic(extrinsic_subparser)
+
+    extract_subparser = subparsers.add_parser(
+        "extract",
+        help=EXTRACT_DESC
+    )
+
+    cli_extract(extract_subparser)
 
     parsed = parser.parse_args(args)
 
@@ -77,6 +85,8 @@ def main():
     args = cli(prog="ao", args=sys.argv[1:])
     if args.subparser_name == "extrinsic":
         main_error_handler(args, run_extrinsic)
+    if args.subparser_name == "extract":
+        main_error_handler(args, run_extract)
     else:
         raise ValueError("I shouldn't reach this point ever")
     return
