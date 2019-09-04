@@ -98,8 +98,8 @@ def cli_extrinsic(parser):
     parser.add_argument(
         "--no-softmasking",
         dest="softmasking",
-        action="store_true",
-        default=False,
+        action="store_false",
+        default=True,
         help=("Prevent augustus from interpreting lowercase bases as "
               "softmasked. Sets augustus parameter `--softmasking=off`.")
     )
@@ -296,6 +296,9 @@ def run_augustus(
         gff3="on",
         progress="false",
         protein="off",
+        start="off",
+        stop="off",
+        introns="off",
         stop_codon_excluded_from_cds="false",
     )
 
@@ -359,7 +362,7 @@ def evaluate(
             outfile=tidied_gff,
             sort=True,
             tidy=True,
-            addintrons=True,
+            addintrons=False,
         )
 
         gt_stdout, gt_stderr = genometools_cmd()

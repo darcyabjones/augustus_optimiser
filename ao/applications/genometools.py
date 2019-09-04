@@ -2,6 +2,16 @@ from Bio.Application import AbstractCommandline
 from Bio.Application import _Option, _Argument, _StaticArgument, _Switch
 from Bio.Application import _ArgumentList
 
+from typing import List
+
+def check_is_list_of_str(string: List[str]) -> bool:
+    for s in string:
+        if not isinstance(s, str):
+            raise ValueError(
+                f"The parameter must be a string. You provided '{string}'."
+            )
+    return True
+
 
 def check_is_str(string: str) -> bool:
     if not isinstance(string, str):
@@ -168,9 +178,9 @@ class Merge(AbstractCommandline):
         """ Construct and evaluate genometools merge commands.
 
         Example
-        >>> x = Merge(infile="test.gff3", sort=True)
+        >>> x = Merge(infiles=["test.gff3"], tidy=True)
         >>> print(x)
-        gt merge -sort test.gff3
+        gt merge -tidy test.gff3
         """
 
         self.program_name = f"{cmd} merge"
@@ -204,7 +214,7 @@ class Merge(AbstractCommandline):
                     ),
             _ArgumentList(["infiles"],
                           "The GFF3 files to operate on.",
-                          checker_function=check_is_str,
+                          checker_function=check_is_list_of_str,
                           filename=True,
                           is_required=True)
         ]

@@ -113,11 +113,17 @@ def groupby_seqid(gff: GFF) -> Dict[str, List[GFFRecord]]:
 def gffrecords_to_intervals(features: Sequence[GFFRecord]) -> List[Interval]:
     """ Construct an interval tree from gff records. """
 
-    return [
-        Interval(f.start, f.end, i)
-        for i, f
-        in enumerate(features)
-    ]
+    out = []
+    for i, f in enumerate(features):
+        if f.start == f.end:
+            iv = Interval(f.start, f.start + 1, i)
+        elif f.end < f.start:
+            iv = Interval(f.end, f.start, i)
+        else:
+            iv = Interval(f.start, f.end, i)
+
+        out.append(iv)
+    return out
 
 
 def pad_intervals(intervals: Sequence[Interval], pad: int) -> List[Interval]:
@@ -158,7 +164,7 @@ def merge_overlapping(
 
     itree.merge_overlaps(strict=False)
 
-    seen = set()
+    seen: Set[Tuple[int, int]] = set()
 
     for interval in itree:
 
@@ -180,6 +186,17 @@ def shift_gff(gff: GFF, seqid: str, start: int) -> GFF:
         f.start -= start
         f.end -= start
         f.seqid = seqid
+        if f.attributes is not None:
+            if f.attributes.id is not None:
+                f.attributes.id = seqid + "_" + f.attributes.id
+
+            new_parents = []
+            for parent in f.attributes.parent:
+                new_parent = seqid + "_" + parent
+                new_parents.append(new_parent)
+
+            f.attributes.parent = new_parents
+
         out.append(f)
 
     return GFF(out)
@@ -254,13 +271,18 @@ def get_blocks(
             continue
 
         gene_itree = IntervalTree(gffrecords_to_intervals(gene_features))
-        hint_itree = fmap(
-            IntervalTree,
-            fmap(
-                gffrecords_to_intervals,
-                fmap(lambda h: h.get(seqid, []), hints_by_seqid)
+        try:
+            hint_itree = fmap(
+                IntervalTree,
+                fmap(
+                    gffrecords_to_intervals,
+                    fmap(lambda h: h.get(seqid, []), hints_by_seqid)
+                )
             )
-        )
+        except ValueError as e:
+            if hints_by_seqid is not None:
+                print(seqid, hints_by_seqid.get(seqid, []))
+            raise e
 
         if target_ids is None:
             target_features: List[GFFRecord] = gene_features
@@ -272,7 +294,7 @@ def get_blocks(
         else:
             block_iter = pad_features(target_features, pad)
 
-        seen = set()
+        seen: Set[Tuple[int, int]] = set()
         for start, end in block_iter:
             if (start, end) in seen:
                 continue

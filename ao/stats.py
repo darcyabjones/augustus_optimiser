@@ -7,7 +7,46 @@ from ao.hints import HintConfig
 from ao.parsers.parseval_summary import ParsEvalSummary
 
 
+def sensitivity(true_pos: int, false_neg: int) -> Optional[float]:
+    try:
+        return true_pos / (true_pos + false_neg)
+    except ZeroDivisionError:
+        return None
+
+
+def specificity(true_pos: int, false_pos: int) -> Optional[float]:
+    try:
+        return true_pos / (true_pos + false_pos)
+    except ZeroDivisionError:
+        return None
+
+
+def f1(spec: Optional[float], sens: Optional[float]) -> Optional[float]:
+    if spec is None or sens is None:
+        return None
+    else:
+        return (2 * spec * sens) / (spec + sens)
+
+
+def edit_dist(spec: Optional[float], sens: Optional[float]) -> Optional[float]:
+    if spec is None or sens is None:
+        return None
+    else:
+        congruency = (spec + sens) / 2
+        return 1 - congruency
+
+
 class AnnotationStatistics(NamedTuple):
+
+    gene_num: int
+    gene_num_true_pos: int
+    gene_num_false_neg: int
+    gene_num_false_pos: int
+
+    gene_sens: Optional[float]
+    gene_spec: Optional[float]
+    gene_f1: Optional[float]
+    gene_edit: Optional[float]
 
     num_gene_complete_match: int
 
@@ -58,6 +97,14 @@ class AnnotationStatistics(NamedTuple):
     @staticmethod
     def columns() -> List[str]:
         return [
+            "gene_num",
+            "gene_num_true_pos",
+            "gene_num_false_neg",
+            "gene_num_false_pos",
+            "gene_sens",
+            "gene_spec",
+            "gene_f1",
+            "gene_edit",
             "num_gene_complete_match",
             "num_cds_str_match",
             "num_exon_str_match",
@@ -116,7 +163,24 @@ class AnnotationStatistics(NamedTuple):
         cls,
         summary: ParsEvalSummary
     ) -> "AnnotationStatistics":
+        true_pos = summary.gene_loci.shared
+        false_neg = summary.gene_loci.ref_unique
+        false_pos = summary.gene_loci.pred_unique
+
+        gene_sens = sensitivity(true_pos, false_neg)
+        gene_spec = specificity(true_pos, false_pos)
+        gene_f1 = f1(gene_spec, gene_sens)
+        gene_edit = edit_dist(gene_spec, gene_sens) 
+            
         return cls(
+            summary.gene_loci.total,
+            true_pos,
+            false_neg,
+            false_pos,
+            gene_sens,
+            gene_spec,
+            gene_f1,
+            gene_edit,
             summary.total_comparisons.perfect_matches.num_matches,
             summary.total_comparisons.cds_matches.num_matches,
             summary.total_comparisons.exon_matches.num_matches,
